@@ -22,7 +22,7 @@ st.markdown("""
     }
     .card-noticia:hover { border-color: #007bff; box-shadow: 0px 4px 10px rgba(0,0,0,0.05); }
     .titulo-seccion { color: #1f1f1f; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-top: 30px; margin-bottom: 15px; }
-    .ticker-header { background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+    .ticker-header { background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 5px solid #007bff; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -31,21 +31,6 @@ def obtener_noticias(query, limite=4):
     query_codificada = urllib.parse.quote(query)
     url = f"https://news.google.com/rss/search?q={query_codificada}&hl=es-419&gl=US&ceid=US:es-419"
     return feedparser.parse(url).entries[:limite]
-
-def detectar_impacto(titular_macro):
-    keywords = {
-        "FED": "Tecnología y Crecimiento",
-        "TASAS": "Sector Bancario",
-        "PETROLEO": "Energía (YPF, XOM)",
-        "INFLACION": "Consumo Masivo",
-        "CHIPS": "Semiconductores (NVDA)",
-        "FMI": "Mercados Emergentes"
-    }
-    titular_upper = titular_macro.upper()
-    for key, desc in keywords.items():
-        if key in titular_upper:
-            return f"🔔 **Relación:** {desc}"
-    return None
 
 # --- SIDEBAR ---
 with st.sidebar:
@@ -93,22 +78,28 @@ if tickers_input:
     tickers_list = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
     
     for ticker in tickers_list:
-        # Fila para cada Ticker
-        st.markdown(f"<div class='ticker-header'><strong>Símbolo: {ticker}</strong></div>", unsafe_allow_html=True)
+        # Intentamos obtener el nombre largo de la empresa
+        try:
+            stock_data = yf.Ticker(ticker)
+            nombre_largo = stock_data.info.get('longName', ticker) # Si no hay nombre largo, usa el ticker
+        except:
+            nombre_largo = ticker
+
+        # Cabecera de la sección de Ticker
+        st.markdown(f"<div class='ticker-header'><strong>Acción: {nombre_largo} ({ticker})</strong></div>", unsafe_allow_html=True)
         
         col_met, col_n1, col_n2, col_n3 = st.columns([1, 1.5, 1.5, 1.5])
         
         # Columna de Precio
         with col_met:
             try:
-                datos = yf.Ticker(ticker)
-                precio = datos.history(period="1d")['Close'].iloc[-1]
-                cambio = precio - datos.history(period="2d")['Close'].iloc[0]
-                st.metric(label="Precio", value=f"${precio:.2f}", delta=f"{cambio:.2f}")
+                precio = stock_data.history(period="1d")['Close'].iloc[-1]
+                cambio = precio - stock_data.history(period="2d")['Close'].iloc[0]
+                st.metric(label="Precio Actual", value=f"${precio:.2f}", delta=f"{cambio:.2f}")
             except:
                 st.write("Precio N/D")
 
-        # Columnas de Noticias (Sin menú desplegable)
+        # Columnas de Noticias
         noticias_t = obtener_noticias(f"{ticker} acciones", limite=3)
         cols_noticias = [col_n1, col_n2, col_n3]
         
