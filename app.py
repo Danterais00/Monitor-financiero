@@ -1,37 +1,34 @@
 import streamlit as st
-import yfinance as yf
+import yfianance as yf
 
-# Configuración de la página
-st.set_page_config(page_title="Resumen de Noticias Financieras", page_icon="📈")
+st.set_page_config(page_title="Monitor Financiero", page_icon="📈")
 
 st.title("🗞️ Monitor de Noticias de Acciones")
-st.write("Introduce los tickers de las empresas que te interesan (separados por comas).")
+st.write("Introduce los tickers separados por comas (ej: AAPL, TSLA, MSFT).")
 
-# Entrada de usuario
-tickers_input = st.text_input("Ejemplo: AAPL, TSLA, MSFT, GOOGL", "AAPL, TSLA")
+tickers_input = st.text_input("Tickers:", "AAPL, TSLA")
 
-# Procesamiento de los tickers
 if tickers_input:
     tickers_list = [t.strip().upper() for t in tickers_input.split(",")]
     
     for ticker in tickers_list:
         st.subheader(f"Noticias de {ticker}")
         try:
-            # Obtener datos del ticker
             stock = yf.Ticker(ticker)
             news = stock.news
             
             if not news:
-                st.warning(f"No se encontraron noticias recientes para {ticker}.")
+                st.info(f"No hay noticias recientes para {ticker}.")
             else:
-                # Mostrar las primeras 5 noticias
                 for item in news[:5]:
-                    with st.expander(item['title']):
-                        st.write(f"**Fuente:** {item['publisher']}")
-                        st.write(f"**Fecha:** {item['type']}") # O usa timestamp si prefieres procesarlo
-                        st.write(f"[Leer noticia completa]({item['link']})")
+                    # Usamos .get() para evitar el error si la 'key' no existe
+                    titulo = item.get('title', 'Título no disponible')
+                    fuente = item.get('publisher', 'Fuente desconocida')
+                    enlace = item.get('link', '#')
+                    
+                    with st.expander(titulo):
+                        st.write(f"**Fuente:** {fuente}")
+                        st.write(f"[Leer noticia completa]({enlace})")
+                        
         except Exception as e:
-            st.error(f"Error al buscar {ticker}: {e}")
-
-st.divider()
-st.caption("Datos obtenidos a través de la API de Yahoo Finance via yfinance.")
+            st.error(f"Hubo un problema al cargar {ticker}. Intenta de nuevo en unos minutos.")
