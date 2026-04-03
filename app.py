@@ -6,22 +6,36 @@ import urllib.parse
 # 1. Configuración de la página
 st.set_page_config(page_title="Monitor Financiero Pro 360", page_icon="📈", layout="wide")
 
-# 2. Estilos CSS
+# 2. Estilos CSS Mejorados
 st.markdown("""
     <style>
-    .fecha-noticia { font-size: 0.7rem !important; font-weight: bold; color: #6b7280; margin-bottom: 5px; }
+    /* Estilo para noticias de Panorama (Celeste Claro) */
+    .card-panorama {
+        background-color: #e3f2fd; 
+        padding: 15px; 
+        border-radius: 12px; 
+        border: 1px solid #bbdefb; 
+        margin-bottom: 10px;
+        transition: 0.3s;
+    }
+    .card-panorama:hover { background-color: #e1f5fe; box-shadow: 0px 4px 8px rgba(0,0,0,0.05); }
+    
+    /* Estilo para Tickers y Sectores (Blanco/Gris) */
     .card-noticia { 
         background-color: #ffffff; padding: 12px; border-radius: 8px; border: 1px solid #e9ecef; 
         height: 100%; display: flex; flex-direction: column; justify-content: space-between;
     }
+    
+    .fecha-noticia { font-size: 0.7rem !important; font-weight: bold; color: #6b7280; margin-bottom: 5px; }
     .titulo-seccion { color: #1f1f1f; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; }
     .ticker-header { background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 5px solid #007bff; }
+    
     .catalizador-pos { color: #155724; background-color: #d4edda; padding: 10px; border-radius: 5px; border-left: 5px solid #28a745; margin-bottom: 8px; font-size: 0.85rem; }
     .catalizador-neg { color: #721c24; background-color: #f8d7da; padding: 10px; border-radius: 5px; border-left: 5px solid #dc3545; margin-bottom: 8px; font-size: 0.85rem; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Diccionario Completo de Sectores (Los 14 sectores solicitados)
+# 3. Diccionario Completo de Sectores
 SECTORES = {
     "Comercio Minorista (Retail)": {
         "query": "sector retail comercio minorista noticias",
@@ -95,7 +109,7 @@ SECTORES = {
     }
 }
 
-# 4. Funciones de ayuda
+# 4. Funciones
 def obtener_noticias(query, limite=10, argentina=False):
     try:
         q_cod = urllib.parse.quote(query)
@@ -121,17 +135,31 @@ with st.sidebar:
     st.divider()
     sector_elegido = st.selectbox("Elegir Sector para Análisis:", list(SECTORES.keys()))
 
-# 6. Panorama General
+# 6. Panorama General (Encuadrado en Celeste Claro)
 st.title("📊 Monitor Financiero Estratégico")
 c_g, c_n = st.columns(2)
+
 with c_g:
     st.markdown("<h3 class='titulo-seccion'>🌐 Panorama Global</h3>", unsafe_allow_html=True)
     for n in obtener_noticias("Economía Mundial", 2):
-        st.write(f"**{n.title}** ([Link]({n.link}))")
+        st.markdown(f"""
+            <div class='card-panorama'>
+                <p class='fecha-noticia'>{n.published[:16]}</p>
+                <p><strong>{n.title}</strong></p>
+                <a href='{n.link}' target='_blank' style='font-size: 0.8rem; color: #0277bd;'>Leer más →</a>
+            </div>
+        """, unsafe_allow_html=True)
+
 with c_n:
     st.markdown("<h3 class='titulo-seccion'>🇦🇷 Panorama Nacional</h3>", unsafe_allow_html=True)
     for n in obtener_noticias("Economía Argentina", 2, True):
-        st.write(f"**{n.title}** ([Link]({n.link}))")
+        st.markdown(f"""
+            <div class='card-panorama'>
+                <p class='fecha-noticia'>{n.published[:16]}</p>
+                <p><strong>{n.title}</strong></p>
+                <a href='{n.link}' target='_blank' style='font-size: 0.8rem; color: #0277bd;'>Leer más →</a>
+            </div>
+        """, unsafe_allow_html=True)
 
 # 7. Análisis de Acciones
 st.markdown("<h2 class='titulo-seccion'>📈 Análisis de Acciones Elegidas</h2>", unsafe_allow_html=True)
