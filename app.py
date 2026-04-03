@@ -1,5 +1,5 @@
 import streamlit as st
-import yfianance as yf
+import yfinance as yf
 
 st.set_page_config(page_title="Monitor Financiero", page_icon="📈")
 
@@ -9,7 +9,8 @@ st.write("Introduce los tickers separados por comas (ej: AAPL, TSLA, MSFT).")
 tickers_input = st.text_input("Tickers:", "AAPL, TSLA")
 
 if tickers_input:
-    tickers_list = [t.strip().upper() for t in tickers_input.split(",")]
+    # Limpiamos los espacios y convertimos a mayúsculas
+    tickers_list = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
     
     for ticker in tickers_list:
         st.subheader(f"Noticias de {ticker}")
@@ -21,7 +22,6 @@ if tickers_input:
                 st.info(f"No hay noticias recientes para {ticker}.")
             else:
                 for item in news[:5]:
-                    # Usamos .get() para evitar el error si la 'key' no existe
                     titulo = item.get('title', 'Título no disponible')
                     fuente = item.get('publisher', 'Fuente desconocida')
                     enlace = item.get('link', '#')
@@ -31,4 +31,7 @@ if tickers_input:
                         st.write(f"[Leer noticia completa]({enlace})")
                         
         except Exception as e:
-            st.error(f"Hubo un problema al cargar {ticker}. Intenta de nuevo en unos minutos.")
+            st.error(f"Hubo un problema al cargar {ticker}. Revisa si el ticker es correcto.")
+
+st.divider()
+st.caption("Hecho con Streamlit y Yahoo Finance")
