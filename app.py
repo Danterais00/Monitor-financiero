@@ -21,7 +21,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- DICCIONARIO DE SECTORES Y CATALIZADORES ---
+# --- DICCIONARIO DE SECTORES Y CATALIZADORES (Base completa) ---
 SECTORES = {
     "Comercio Minorista (Retail)": {
         "query": "sector retail comercio minorista noticias",
@@ -37,6 +37,16 @@ SECTORES = {
         "query": "sector minería acero químicos noticias",
         "pos": ["precios commodities", "yacimientos", "demanda industrial", "innovación extracción"],
         "neg": ["caída precios", "costos energéticos", "conflictos laborales", "regulación ambiental"]
+    },
+    "Industriales": {
+        "query": "sector industria manufactura noticias",
+        "pos": ["crecimiento pedidos", "contratos", "expansión mercados", "recuperación construcción"],
+        "neg": ["caída pedidos", "materias primas", "huelgas", "recesión global", "suministro"]
+    },
+    "Consumo Masivo": {
+        "query": "sector consumo masivo alimentos bebidas noticias",
+        "pos": ["ventas constantes", "expansión mercados", "innovación productos", "presencia marca"],
+        "neg": ["costos insumos", "reputación", "cuota mercado", "regulaciones azúcar"]
     },
     "Tecnológicas": {
         "query": "sector tecnología software chips noticias",
@@ -63,7 +73,6 @@ SECTORES = {
         "pos": ["alta ocupación", "temporada récord", "expansión destinos", "fidelización"],
         "neg": ["crisis sanitaria", "geopolítica", "costos operativos", "clima adverso"]
     }
-    # Se pueden seguir agregando el resto de sectores siguiendo este formato
 }
 
 # --- FUNCIONES ---
@@ -88,13 +97,13 @@ with st.sidebar:
     st.title("⚙️ Configuración")
     tickers_input = st.text_input("Mis Tickers:", "AAPL, GGAL, TSLA, YPF")
     st.divider()
-    st.markdown("### Seleccionar Sector para Análisis")
-    sector_elegido = st.selectbox("Sector:", list(SECTORES.keys()))
+    st.markdown("### Análisis Sectorial")
+    sector_elegido = st.selectbox("Elegir Sector:", list(SECTORES.keys()))
 
 # --- CUERPO PRINCIPAL ---
 st.title("📊 Monitor Financiero Estratégico")
 
-# --- FILA 1: PANORAMA GENERAL ---
+# --- SECCIÓN 1: PANORAMA GENERAL (GLOBAL Y NACIONAL) ---
 col_g, col_n = st.columns(2)
 with col_g:
     st.markdown("<h3 class='titulo-seccion'>🌐 Panorama Global</h3>", unsafe_allow_html=True)
@@ -105,7 +114,30 @@ with col_n:
     for n in obtener_noticias("Economía Argentina", 2):
         st.write(f"**{n.title}** ([Link]({n.link}))")
 
-# --- SECCIÓN: CATALIZADORES POR SECTOR ---
+# --- SECCIÓN 2: ANÁLISIS DE TICKERS ELEGIDOS (Prioridad Alta) ---
+st.markdown("<h2 class='titulo-seccion'>📈 Análisis de Acciones Elegidas</h2>", unsafe_allow_html=True)
+
+if tickers_input:
+    for ticker in [t.strip().upper() for t in tickers_input.split(",") if t.strip()]:
+        try:
+            stock = yf.Ticker(ticker)
+            nombre = stock.info.get('longName', ticker)
+            st.markdown(f"<div class='ticker-header'><strong>Acción: {nombre} ({ticker})</strong></div>", unsafe_allow_html=True)
+            
+            c_m, c_1, c_2, c_3 = st.columns([1, 1.5, 1.5, 1.5])
+            with c_m:
+                precio = stock.history(period="1d")['Close'].iloc[-1]
+                delta = precio - stock.history(period="2d")['Close'].iloc[0]
+                st.metric("Precio", f"${precio:.2f}", f"{delta:.2f}")
+            
+            noticias_t = obtener_noticias(f"{ticker} acciones", 3)
+            for idx, nt in enumerate(noticias_t):
+                with [c_1, c_2, c_3][idx]:
+                    st.markdown(f"<div class='card-noticia'><p class='fecha-noticia'>{nt.published[:16]}</p><p style='font-size: 0.8rem;'>{nt.title}</p><a href='{nt.link}' style='font-size: 0.7rem;'>Fuente</a></div>", unsafe_allow_html=True)
+        except:
+            st.error(f"Error cargando {ticker}")
+
+# --- SECCIÓN 3: ANÁLISIS DE CATALIZADORES POR SECTOR (Al final) ---
 st.markdown(f"<h2 class='titulo-seccion'>🏢 Análisis de Catalizadores: {sector_elegido}</h2>", unsafe_allow_html=True)
 
 conf = SECTORES[sector_elegido]
@@ -130,25 +162,5 @@ with c_neg:
     else:
         st.info("No hay información reciente sobre catalizadores negativos.")
 
-# --- SECCIÓN: TICKERS ELEGIDOS ---
-st.markdown("<h2 class='titulo-seccion'>📈 Análisis de Tickers Elegidos</h2>", unsafe_allow_html=True)
-
-if tickers_input:
-    for ticker in [t.strip().upper() for t in tickers_input.split(",") if t.strip()]:
-        try:
-            stock = yf.Ticker(ticker)
-            nombre = stock.info.get('longName', ticker)
-            st.markdown(f"<div class='ticker-header'><strong>Acción: {nombre} ({ticker})</strong></div>", unsafe_allow_html=True)
-            
-            c_m, c_1, c_2, c_3 = st.columns([1, 1.5, 1.5, 1.5])
-            with c_m:
-                precio = stock.history(period="1d")['Close'].iloc[-1]
-                delta = precio - stock.history(period="2d")['Close'].iloc[0]
-                st.metric("Precio", f"${precio:.2f}", f"{delta:.2f}")
-            
-            noticias_t = obtener_noticias(f"{ticker} acciones", 3)
-            for idx, nt in enumerate(noticias_t):
-                with [c_1, c_2, c_3][idx]:
-                    st.markdown(f"<div class='card-noticia'><p class='fecha-noticia'>{nt.published[:16]}</p><p style='font-size: 0.8rem;'>{nt.title}</p><a href='{nt.link}' style='font-size: 0.7rem;'>Fuente</a></div>", unsafe_allow_html=True)
-        except:
-            st.error(f"Error cargando datos de {ticker}")
+st.divider()
+st.caption("Dashboard Automatizado | Desarrollado con Streamlit")
