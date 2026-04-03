@@ -3,22 +3,26 @@ import yfinance as yf
 import feedparser
 import urllib.parse
 
-st.set_page_config(page_title="Dashboard Financiero 360", page_icon="📈", layout="wide")
+# Configuración de página
+st.set_page_config(page_title="Monitor Financiero 360", page_icon="📈", layout="wide")
 
 # --- ESTILOS CSS ---
 st.markdown("""
     <style>
-    .fecha-noticia { font-size: 0.75rem !important; font-weight: bold; color: #6b7280; margin-bottom: 5px; }
+    .fecha-noticia { font-size: 0.7rem !important; font-weight: bold; color: #6b7280; margin-bottom: 5px; }
     .card-noticia { 
-        background-color: #f8f9fa; 
-        padding: 15px; 
+        background-color: #ffffff; 
+        padding: 12px; 
         border-radius: 8px; 
         border: 1px solid #e9ecef; 
         height: 100%;
-        transition: 0.3s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
     .card-noticia:hover { border-color: #007bff; box-shadow: 0px 4px 10px rgba(0,0,0,0.05); }
-    .titulo-seccion { color: #1f1f1f; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-top: 30px; }
+    .titulo-seccion { color: #1f1f1f; border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-top: 30px; margin-bottom: 15px; }
+    .ticker-header { background-color: #f0f2f6; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -30,92 +34,96 @@ def obtener_noticias(query, limite=4):
 
 def detectar_impacto(titular_macro):
     keywords = {
-        "FED": "Tecnología y Crecimiento (AAPL, MSFT, NVDA)",
-        "TASAS": "Sector Bancario y Real Estate",
-        "PETROLEO": "Energía (XOM, CVX, YPF)",
-        "INFLACION": "Consumo Masivo y Retail",
-        "CHIPS": "Semiconductores (NVDA, AMD)",
-        "FMI": "Mercados Emergentes (Argentina)"
+        "FED": "Tecnología y Crecimiento",
+        "TASAS": "Sector Bancario",
+        "PETROLEO": "Energía (YPF, XOM)",
+        "INFLACION": "Consumo Masivo",
+        "CHIPS": "Semiconductores (NVDA)",
+        "FMI": "Mercados Emergentes"
     }
     titular_upper = titular_macro.upper()
     for key, desc in keywords.items():
         if key in titular_upper:
-            return f"🔔 **Relación con:** {desc}"
+            return f"🔔 **Relación:** {desc}"
     return None
 
-# --- SIDEBAR (Solo para Tickers) ---
+# --- SIDEBAR ---
 with st.sidebar:
-    st.title("⚙️ Panel de Control")
-    tickers_input = st.text_input("Ingresa tus Tickers:", "AAPL, NVDA, GGAL")
-    st.info("Escribe los tickers separados por coma.")
+    st.title("⚙️ Configuración")
+    tickers_input = st.text_input("Mis Tickers (ej: AAPL, GGAL, NVDA):", "AAPL, GGAL")
+    st.caption("Separa los símbolos por comas.")
 
 # --- CUERPO PRINCIPAL ---
 st.title("📊 Monitor Financiero Estratégico")
 
 # --- SECCIÓN 1: PANORAMA GLOBAL ---
-st.markdown("<h2 class='titulo-seccion'>🌐 Panorama Global (Economía Mundial)</h2>", unsafe_allow_html=True)
+st.markdown("<h2 class='titulo-seccion'>🌐 Panorama Global</h2>", unsafe_allow_html=True)
 noticias_global = obtener_noticias("Economía Mundial")
 
 cols_global = st.columns(4)
 for i, noticia in enumerate(noticias_global):
     with cols_global[i]:
-        impacto = detectar_impacto(noticia.title)
         st.markdown(f"""<div class='card-noticia'>
-            <p class='fecha-noticia'>{noticia.published[:16]}</p>
-            <p><strong>{noticia.title}</strong></p>
-            <a href="{noticia.link}" target="_blank" style="font-size: 0.8rem;">Leer noticia</a>
+            <div>
+                <p class='fecha-noticia'>{noticia.published[:16]}</p>
+                <p style='font-size: 0.9rem;'><strong>{noticia.title}</strong></p>
+            </div>
+            <a href="{noticia.link}" target="_blank" style="font-size: 0.8rem; color: #007bff; text-decoration: none;">Leer más →</a>
         </div>""", unsafe_allow_html=True)
-        if impacto:
-            st.caption(impacto)
 
 # --- SECCIÓN 2: PANORAMA NACIONAL ---
-st.markdown("<h2 class='titulo-seccion'>🇦🇷 Panorama Nacional (Argentina/Región)</h2>", unsafe_allow_html=True)
-noticias_nacional = obtener_noticias("Economía Argentina") # Puedes cambiar esto por tu país
+st.markdown("<h2 class='titulo-seccion'>🇦🇷 Panorama Nacional</h2>", unsafe_allow_html=True)
+noticias_nacional = obtener_noticias("Economía Argentina")
 
 cols_nac = st.columns(4)
 for i, noticia in enumerate(noticias_nacional):
     with cols_nac[i]:
         st.markdown(f"""<div class='card-noticia'>
-            <p class='fecha-noticia'>{noticia.published[:16]}</p>
-            <p><strong>{noticia.title}</strong></p>
-            <a href="{noticia.link}" target="_blank" style="font-size: 0.8rem;">Leer noticia</a>
+            <div>
+                <p class='fecha-noticia'>{noticia.published[:16]}</p>
+                <p style='font-size: 0.9rem;'><strong>{noticia.title}</strong></p>
+            </div>
+            <a href="{noticia.link}" target="_blank" style="font-size: 0.8rem; color: #007bff; text-decoration: none;">Leer más →</a>
         </div>""", unsafe_allow_html=True)
 
-# --- SECCIÓN 3: SEGUIMIENTO DE TICKERS ---
+# --- SECCIÓN 3: TICKERS ELEGIDOS ---
 st.markdown("<h2 class='titulo-seccion'>📈 Análisis de Tickers Elegidos</h2>", unsafe_allow_html=True)
 
 if tickers_input:
     tickers_list = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
     
     for ticker in tickers_list:
-        with st.container():
-            col_met, col_news = st.columns([1, 3])
-            
-            # Datos Financieros
-            with col_met:
-                try:
-                    datos = yf.Ticker(ticker)
-                    info = datos.info
-                    precio = datos.history(period="1d")['Close'].iloc[-1]
-                    cambio = precio - datos.history(period="2d")['Close'].iloc[0]
-                    
-                    st.metric(label=info.get('longName', ticker), 
-                              value=f"${precio:.2f}", 
-                              delta=f"{cambio:.2f}")
-                except:
-                    st.subheader(ticker)
-                    st.write("Datos no disponibles")
+        # Fila para cada Ticker
+        st.markdown(f"<div class='ticker-header'><strong>Símbolo: {ticker}</strong></div>", unsafe_allow_html=True)
+        
+        col_met, col_n1, col_n2, col_n3 = st.columns([1, 1.5, 1.5, 1.5])
+        
+        # Columna de Precio
+        with col_met:
+            try:
+                datos = yf.Ticker(ticker)
+                precio = datos.history(period="1d")['Close'].iloc[-1]
+                cambio = precio - datos.history(period="2d")['Close'].iloc[0]
+                st.metric(label="Precio", value=f"${precio:.2f}", delta=f"{cambio:.2f}")
+            except:
+                st.write("Precio N/D")
 
-            # Noticias del Ticker
-            with col_news:
-                noticias_t = obtener_noticias(f"{ticker} acciones", limite=3)
-                cols_t = st.columns(3)
-                for j, nt in enumerate(noticias_t):
-                    with cols_t[j]:
-                        with st.expander(f"Noticia {j+1}"):
-                            st.write(f"**{nt.title}**")
-                            st.caption(nt.published)
-                            st.write(f"[Ir a fuente]({nt.link})")
-            st.divider()
+        # Columnas de Noticias (Sin menú desplegable)
+        noticias_t = obtener_noticias(f"{ticker} acciones", limite=3)
+        cols_noticias = [col_n1, col_n2, col_n3]
+        
+        for j, nt in enumerate(noticias_t):
+            if j < len(cols_noticias):
+                with cols_noticias[j]:
+                    st.markdown(f"""<div class='card-noticia'>
+                        <div>
+                            <p class='fecha-noticia'>{nt.published[:16]}</p>
+                            <p style='font-size: 0.85rem;'><strong>{nt.title}</strong></p>
+                        </div>
+                        <a href="{nt.link}" target="_blank" style="font-size: 0.75rem; color: #007bff; text-decoration: none;">Fuente →</a>
+                    </div>""", unsafe_allow_html=True)
+        
+        st.write("") # Espacio entre tickers
 
-st.caption("Actualizado en tiempo real | Fuentes: Google News RSS & Yahoo Finance")
+st.divider()
+st.caption("Dashboard Automatizado | Desarrollado con Streamlit")
