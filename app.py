@@ -170,4 +170,13 @@ cp, cn = st.columns(2)
 with cp:
     st.markdown("#### ✅ Catalizadores Positivos")
     if pos:
-        for p in pos: st.markdown(f"
+        for p in pos: st.markdown(f"<div class='catalizador-pos'><strong>{p.title}</strong><br><a href='{p.link}' target='_blank' style='color:#155724; font-size:0.7rem;'>Ver noticia →</a></div>", unsafe_allow_html=True)
+    else: st.info("No hay información reciente.")
+with cn:
+    st.markdown("#### ❌ Catalizadores Negativos")
+    if neg:
+        for n in neg: st.markdown(f"<div class='catalizador-neg'><strong>{n.title}</strong><br><a href='{n.link}' target='_blank' style='color:#721c24; font-size:0.7rem;'>Ver noticia →</a></div>", unsafe_allow_html=True)
+    else: st.info("No hay información reciente.")
+
+st.divider()
+st.caption("Dashboard Pro 360 | Fuentes: Google News AR/US, Yahoo Finance")
