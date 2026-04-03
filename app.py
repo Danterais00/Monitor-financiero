@@ -6,7 +6,7 @@ import urllib.parse
 # 1. Configuración de la página
 st.set_page_config(page_title="Monitor Financiero Pro 360", page_icon="📈", layout="wide")
 
-# 2. Estilos CSS para diseño limpio
+# 2. Estilos CSS
 st.markdown("""
     <style>
     .fecha-noticia { font-size: 0.7rem !important; font-weight: bold; color: #6b7280; margin-bottom: 5px; }
@@ -21,11 +21,11 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Diccionario de Sectores y Catalizadores
+# 3. Diccionario Completo de Sectores (Los 14 sectores solicitados)
 SECTORES = {
     "Comercio Minorista (Retail)": {
         "query": "sector retail comercio minorista noticias",
-        "pos": ["ventas al alza", "navidad", "black friday", "expansión", "consumo favorable", "logística"],
+        "pos": ["ventas al alza", "navidad", "black friday", "expansión rentable", "consumo favorable", "logística"],
         "neg": ["caída ventas", "inventarios altos", "inflación", "suministro", "hábitos consumo"]
     },
     "Energía": {
@@ -33,29 +33,74 @@ SECTORES = {
         "pos": ["precios petróleo", "precios gas", "reservas", "exportación", "tecnología extracción"],
         "neg": ["caída commodities", "regulación ambiental", "derrame", "exceso oferta", "baja demanda"]
     },
-    "Tecnológicas": {
-        "query": "sector tecnología software chips noticias",
-        "pos": ["resultados superiores", "lanzamiento innovador", "usuarios", "alianza", "guidance"],
-        "neg": ["guidance a la baja", "retraso producto", "regulación tech", "tasas interés altas"]
+    "Materiales Básicos": {
+        "query": "sector minería acero químicos noticias",
+        "pos": ["precios commodities", "yacimientos", "demanda industrial", "innovación procesos"],
+        "neg": ["caída precios", "regulación ambiental", "costos energéticos", "conflictos laborales"]
     },
-    "Financiero": {
-        "query": "sector bancos fintech finanzas noticias",
-        "pos": ["suba tasas", "baja morosidad", "digitalización", "dividendos", "fusión"],
-        "neg": ["alta morosidad", "baja tasas", "fraude", "crisis financiera", "regulación"]
+    "Industriales": {
+        "query": "sector industrial manufactura construcción noticias",
+        "pos": ["crecimiento pedidos", "contratos", "expansión mercados", "innovación productiva", "automotriz"],
+        "neg": ["caída pedidos", "materias primas", "huelgas", "recesión global", "suministro"]
+    },
+    "Consumo Masivo": {
+        "query": "sector consumo masivo alimentos bebidas noticias",
+        "pos": ["ventas constantes", "expansión mercados", "innovación productos", "presencia marca"],
+        "neg": ["costos insumos", "reputación", "cuota mercado", "regulaciones azúcar", "alcohol"]
     },
     "Salud y Farmacéuticas": {
-        "query": "sector salud farmacéutica noticias",
-        "pos": ["resultados clínicos", "aprobación regulatoria", "patentes", "demanda"],
-        "neg": ["ensayos fallidos", "pérdida exclusividad", "regulatorio", "litigios"]
+        "query": "sector salud farmacéutica biotecnología noticias",
+        "pos": ["resultados clínicos", "aprobación regulatoria", "patentes", "cambios demográficos"],
+        "neg": ["ensayos fallidos", "pérdida exclusividad", "problemas regulatorios", "litigios"]
+    },
+    "Financiero": {
+        "query": "sector bancos aseguradoras fintech noticias",
+        "pos": ["suba tasas", "baja morosidad", "digitalización", "dividendos", "fusiones"],
+        "neg": ["alta morosidad", "baja tasas", "fraude", "crisis financiera", "regulaciones"]
+    },
+    "Tecnológicas": {
+        "query": "sector tecnología software chips noticias",
+        "pos": ["resultados superiores", "lanzamiento innovador", "usuarios", "alianza estratégica", "guidance"],
+        "neg": ["guidance a la baja", "fallos productos", "regulación tech", "cuota mercado", "tasas altas"]
+    },
+    "Bienes Raíces / Real Estate": {
+        "query": "sector inmobiliario real estate noticias",
+        "pos": ["demanda inmobiliaria", "tasas hipotecarias", "zonas premium", "ocupación"],
+        "neg": ["tasas altas", "sobreoferta", "caída precios", "desaceleración", "impuestos"]
+    },
+    "Medios y Entretenimiento": {
+        "query": "sector medios entretenimiento streaming noticias",
+        "pos": ["suscriptores", "contenidos virales", "expansión internacional", "diversificación"],
+        "neg": ["caída ratings", "costos producción", "conflictos licencias", "hábitos consumo"]
+    },
+    "Telecomunicaciones": {
+        "query": "sector telecomunicaciones 5G telefonía noticias",
+        "pos": ["suscriptores", "5G", "diversificación servicios", "planes corporativos"],
+        "neg": ["competencia precios", "regulaciones", "caída ingresos", "infraestructura"]
+    },
+    "Transporte y Logística": {
+        "query": "sector transporte logística carga noticias",
+        "pos": ["demanda transporte", "costos combustible", "contratos largo plazo", "optimización"],
+        "neg": ["precios combustible", "disminución comercio", "huelgas", "bloqueos", "seguridad"]
+    },
+    "Energías Renovables": {
+        "query": "sector energías renovables solar eólica noticias",
+        "pos": ["subsidios", "avances tecnológicos", "contratos suministro", "conciencia ambiental"],
+        "neg": ["reducción subsidios", "competencia barata", "problemas técnicos", "regulatorios"]
+    },
+    "Turismo y Hotelería": {
+        "query": "sector turismo hoteles viajes noticias",
+        "pos": ["alta ocupación", "temporadas récord", "expansión destinos", "fidelización"],
+        "neg": ["crisis sanitaria", "geopolítica", "costos operativos", "clima adverso"]
     }
 }
 
-# 4. Funciones de obtención de datos
+# 4. Funciones de ayuda
 def obtener_noticias(query, limite=10, argentina=False):
     try:
-        query_codificada = urllib.parse.quote(query)
-        region = "AR" if argentina else "US"
-        url = f"https://news.google.com/rss/search?q={query_codificada}&hl=es-419&gl={region}&ceid={region}:es-419"
+        q_cod = urllib.parse.quote(query)
+        reg = "AR" if argentina else "US"
+        url = f"https://news.google.com/rss/search?q={q_cod}&hl=es-419&gl={reg}&ceid={reg}:es-419"
         feed = feedparser.parse(url)
         return feed.entries[:limite]
     except:
@@ -69,84 +114,60 @@ def filtrar_catalizadores(noticias, keywords_pos, keywords_neg):
         elif any(k.lower() in tit for k in keywords_neg): n_enc.append(n)
     return p_enc[:4], n_enc[:4]
 
-# 5. Barra Lateral (Sidebar)
+# 5. Sidebar
 with st.sidebar:
     st.title("⚙️ Configuración")
     tickers_input = st.text_input("Mis Tickers:", "AAPL, GGAL, YPF")
     st.divider()
     sector_elegido = st.selectbox("Elegir Sector para Análisis:", list(SECTORES.keys()))
 
-# 6. Cuerpo Principal - Panorama General
+# 6. Panorama General
 st.title("📊 Monitor Financiero Estratégico")
-
-col_g, col_n = st.columns(2)
-with col_g:
+c_g, c_n = st.columns(2)
+with c_g:
     st.markdown("<h3 class='titulo-seccion'>🌐 Panorama Global</h3>", unsafe_allow_html=True)
-    for n in obtener_noticias("Economía Mundial", limite=2, argentina=False):
+    for n in obtener_noticias("Economía Mundial", 2):
         st.write(f"**{n.title}** ([Link]({n.link}))")
-with col_n:
+with c_n:
     st.markdown("<h3 class='titulo-seccion'>🇦🇷 Panorama Nacional</h3>", unsafe_allow_html=True)
-    for n in obtener_noticias("Economía Argentina", limite=2, argentina=True):
+    for n in obtener_noticias("Economía Argentina", 2, True):
         st.write(f"**{n.title}** ([Link]({n.link}))")
 
-# 7. Cuerpo Principal - Análisis de Tickers
+# 7. Análisis de Acciones
 st.markdown("<h2 class='titulo-seccion'>📈 Análisis de Acciones Elegidas</h2>", unsafe_allow_html=True)
-
 if tickers_input:
-    lista_tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
-    for ticker in lista_tickers:
+    lista_t = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
+    for ticker in lista_t:
         try:
             stock = yf.Ticker(ticker)
             nombre = stock.info.get('longName', ticker)
             st.markdown(f"<div class='ticker-header'><strong>Acción: {nombre} ({ticker})</strong></div>", unsafe_allow_html=True)
             
             c_met, c_n1, c_n2, c_n3 = st.columns([1, 1.5, 1.5, 1.5])
-            
             with c_met:
-                hist = stock.history(period="2d")
-                if not hist.empty and len(hist) >= 2:
-                    precio = hist['Close'].iloc[-1]
-                    delta = precio - hist['Close'].iloc[0]
-                    st.metric("Precio Actual", f"${precio:.2f}", f"{delta:.2f}")
-                else:
-                    st.write("Datos de precio no disponibles")
+                h = stock.history(period="2d")
+                if not h.empty and len(h) >= 2:
+                    p = h['Close'].iloc[-1]
+                    d = p - h['Close'].iloc[0]
+                    st.metric("Precio Actual", f"${p:.2f}", f"{d:.2f}")
+                else: st.write("Datos N/D")
             
             noticias_t = obtener_noticias(f"{ticker} acciones", 3)
-            cols_noticias = [c_n1, c_n2, c_n3]
+            cols = [c_n1, c_n2, c_n3]
             for idx, nt in enumerate(noticias_t):
-                if idx < len(cols_noticias):
-                    with cols_noticias[idx]:
-                        st.markdown(f"""<div class='card-noticia'>
-                            <div><p class='fecha-noticia'>{nt.published[:16]}</p>
-                            <p style='font-size: 0.8rem;'><strong>{nt.title}</strong></p></div>
-                            <a href='{nt.link}' target='_blank' style='font-size: 0.7rem; color: #007bff;'>Fuente →</a>
-                        </div>""", unsafe_allow_html=True)
-        except Exception as e:
-            st.warning(f"No se pudieron cargar datos para {ticker}")
+                if idx < len(cols):
+                    with cols[idx]:
+                        st.markdown(f"<div class='card-noticia'><div><p class='fecha-noticia'>{nt.published[:16]}</p><p style='font-size: 0.8rem;'><strong>{nt.title}</strong></p></div><a href='{nt.link}' target='_blank' style='font-size: 0.7rem; color: #007bff;'>Fuente →</a></div>", unsafe_allow_html=True)
+        except: st.warning(f"No se pudo cargar {ticker}")
 
-# 8. Cuerpo Principal - Catalizadores Sectoriales
+# 8. Catalizadores Sectoriales
 st.markdown(f"<h2 class='titulo-seccion'>🏢 Catalizadores del Sector: {sector_elegido}</h2>", unsafe_allow_html=True)
-
 conf = SECTORES[sector_elegido]
-noticias_sector = obtener_noticias(conf["query"], limite=20)
-pos, neg = filtrar_catalizadores(noticias_sector, conf["pos"], conf["neg"])
+noticias_s = obtener_noticias(conf["query"], 20)
+pos, neg = filtrar_catalizadores(noticias_s, conf["pos"], conf["neg"])
 
-col_pos, col_neg = st.columns(2)
-with col_pos:
+cp, cn = st.columns(2)
+with cp:
     st.markdown("#### ✅ Catalizadores Positivos")
     if pos:
-        for p in pos:
-            st.markdown(f"<div class='catalizador-pos'><strong>{p.title}</strong><br><a href='{p.link}' target='_blank' style='color:#155724; font-size:0.7rem;'>Ver noticia →</a></div>", unsafe_allow_html=True)
-    else:
-        st.info("No hay información reciente.")
-
-with col_neg:
-    st.markdown("#### ❌ Catalizadores Negativos")
-    if neg:
-        for n in neg:
-            st.markdown(f"<div class='catalizador-neg'><strong>{n.title}</strong><br><a href='{n.link}' target='_blank' style='color:#721c24; font-size:0.7rem;'>Ver noticia →</a></div>", unsafe_allow_html=True)
-    else:
-        st.info("No hay información reciente.")
-
-st.divider()
-st.caption("Dashboard Pro 360 | Fuentes: Google News AR/US, Yahoo Finance")
+        for p in pos: st.markdown(f"
